@@ -19,42 +19,22 @@ app.get('/', function(req, res) {
 });
 
 app.get('/*', function(req, res) {
-	console.log('* Offset: ', req.query.offset);
-
-	var searchTerm = req.params[0],
-		offset = req.query.offset || 10,
-		arr = [];
+	var searchTerm = req.params[0], offset = req.query.offset, arr = [];
 	var client = request.createClient('https://www.googleapis.com');
-	var path = '/customsearch/v1?key=' + api + '&cx=' + cx + '&q=' + searchTerm;
-	var iterations = Math.ceil(offset / 10);
-	console.log('Iterations: ', iterations);
+	var path = '/customsearch/v1?key=' + api + '&cx=' + cx + '&q=' + searchTerm
+		+ (offset ? ('&start=' + offset) : '');
 
-	syncLoop(iterations,
-		// What to do in the loop
-		function(loop){
-			var start = loop.iteration() * 10 + 1;
-			var num = Math.min(10, offset - loop.iteration() * 10);
-			var p = '&num=' + num + '&start=' + start;
-			console.log('* Path <%s>', 'https://www.googleapis.com' + path + p);
+	client.get(path, function(err, response, body) {
+		if (err || response.statusCode !== 200) {
+			console.log('Error: ' + err, response.statusCode);
+			return response.sendStatus(500);
+		}
 
-			// Get num results
-			client.get(path + p, function(err, response, body) {
-				if (err || response.statusCode !== 200) {
-					console.log('Error: ' + err, response.statusCode);
-					return response.sendStatus(500);
-				}
-
-				for (var i = 0; i < body.items.length; i++) {
-					arr.push({image: body.items[i].pagemap.cse_image[0].src, thumbnail: body.items[i].pagemap.cse_thumbnail[0].src, snippet: body.items[i].snippet, context: body.items[i].link});
-				}
-				loop.next();
+		for (var i = 0; i < body.items.length; i++) {
+			arr.push({image: body.items[i].pagemap.cse_image[0].src, thumbnail: body.items[i].pagemap.cse_thumbnail[0].src, snippet: body.items[i].snippet, context: body.items[i].link});
+		}
+		res.json(arr);
 		});
-	},
-		// What to do after completion
-		function(){
-			res.json(arr);
-	});
-
 });
 
 app.set('port', process.env.PORT || 3000);
