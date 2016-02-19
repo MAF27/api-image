@@ -21,8 +21,11 @@ app.get('/latest', function(req, res) {
 app.get('/*', function(req, res) {
 	var searchTerm = req.params[0], offset = req.query.offset, arr = [];
 	var client = request.createClient('https://www.googleapis.com');
-	var path = '/customsearch/v1?key=' + api + '&cx=' + cx + '&q=' + searchTerm
-		+ (offset ? ('&start=' + offset) : '');
+	var path = '/customsearch/v1?key=' + api + '&cx=' + cx + '&q=' + searchTerm + (offset ? ('&start=' + offset) : '');
+
+	if (searchTerm === '') {
+		return res.send('No search term provided.')
+	}
 
 	// Record search
 	history.push({
@@ -34,7 +37,7 @@ app.get('/*', function(req, res) {
 	client.get(path, function(err, response, body) {
 		if (err || response.statusCode !== 200) {
 			console.log('Error: ' + err, response.statusCode);
-			return response.sendStatus(500);
+			return res.send('Apologies - no results for search term "' + searchTerm + '"');
 		}
 
 		if (body.items) {
