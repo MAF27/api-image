@@ -8,6 +8,7 @@ var cookieParser = require('cookie-parser');
 var app = express();
 var cx = '008709307696191659990:81dznmj-lmg';
 var api = process.env.API;
+console.log('FOR PRODUCTION: API: ' + api);
 var history = [];
 
 app.use(cookieParser());
