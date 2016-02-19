@@ -4,18 +4,18 @@ var request = require('request-json');
 var http = require('http');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
-var syncLoop = require('./util.js');
 
 var app = express();
 var cx = '008709307696191659990:81dznmj-lmg';
 var api = process.env.API;
+var history = [];
 
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
-app.get('/', function(req, res) {
-	res.sendFile(__dirname + '/index.html');
+app.get('/latest', function(req, res) {
+	res.json(history);
 });
 
 app.get('/*', function(req, res) {
@@ -24,6 +24,12 @@ app.get('/*', function(req, res) {
 	var path = '/customsearch/v1?key=' + api + '&cx=' + cx + '&q=' + searchTerm
 		+ (offset ? ('&start=' + offset) : '');
 
+	// Record search
+	history.push({
+		term: searchTerm,
+		when: new Date
+	});
+
 	client.get(path, function(err, response, body) {
 		if (err || response.statusCode !== 200) {
 			console.log('Error: ' + err, response.statusCode);
@@ -31,7 +37,11 @@ app.get('/*', function(req, res) {
 		}
 
 		for (var i = 0; i < body.items.length; i++) {
-			arr.push({image: body.items[i].pagemap.cse_image[0].src, thumbnail: body.items[i].pagemap.cse_thumbnail[0].src, snippet: body.items[i].snippet, context: body.items[i].link});
+			arr.push({
+				image: (body.items[i].pagemap.cse_image ? body.items[i].pagemap.cse_image[0].src : 'n/a'),
+				thumbnail: (body.items[i].pagemap.cse_thumbnail ? body.items[i].pagemap.cse_thumbnail[0].src : 'n/a'),
+				snippet: body.items[i].snippet,
+				context: body.items[i].link});
 		}
 		res.json(arr);
 		});
