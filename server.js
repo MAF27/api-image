@@ -18,6 +18,11 @@ app.get('/latest', function(req, res) {
 	res.json(history);
 });
 
+app.get('/favicon.ico', function(req, res) {
+	console.log('Damned favicon');
+	res.end();
+});
+
 app.get('/*', function(req, res) {
 	var searchTerm = req.params[0], offset = req.query.offset, arr = [];
 	var client = request.createClient('https://www.googleapis.com');
@@ -33,7 +38,6 @@ app.get('/*', function(req, res) {
 		when: new Date
 	});
 
-	console.log('SEARCH: ', path);
 	client.get(path, function(err, response, body) {
 		if (err || response.statusCode !== 200) {
 			console.log('Error: ' + err, response.statusCode);
